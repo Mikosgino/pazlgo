@@ -1,1 +1,384 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Сиқырлы Пазл 💖</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
+    body {
+      background: linear-gradient(135deg, #fff0f3, #ffe3e8, #f8edeb);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      color: #4a4a4a;
+    }
+
+    h1 {
+      color: #d84a75;
+      font-size: 1.55rem;
+      margin-bottom: 4px;
+      text-align: center;
+    }
+
+    p.desc {
+      color: #8c7379;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    /* Раундтар мен фотоны ауыстыру */
+    .rounds {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .round-btn {
+      background: #ffffff;
+      border: 1.5px solid #ffd3dc;
+      color: #d84a75;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .round-btn.active {
+      background: #e25580;
+      color: white;
+      border-color: #e25580;
+    }
+
+    .stats {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #d84a75;
+      background: #ffffff;
+      padding: 6px 16px;
+      border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(216, 74, 117, 0.1);
+    }
+
+    /* Пазл тақтасы (320px) */
+    .puzzle-board {
+      width: 320px;
+      height: 320px;
+      background: #fff;
+      padding: 4px;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(216, 74, 117, 0.22);
+      display: grid;
+      gap: 3px;
+      position: relative;
+    }
+
+    .tile {
+      background-repeat: no-repeat;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s, border 0.15s;
+      border: 2px solid transparent;
+    }
+
+    .tile.selected {
+      border: 2.5px solid #e25580;
+      transform: scale(0.92);
+      box-shadow: 0 0 10px rgba(226, 85, 128, 0.6);
+      z-index: 2;
+    }
+
+    .controls {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: white;
+      color: #e25580;
+      border: 1.5px solid #ffd3dc;
+      padding: 9px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .preview-box {
+      margin-top: 14px;
+      text-align: center;
+      display: none;
+    }
+
+    .preview-box.active {
+      display: block;
+    }
+
+    .preview-box img {
+      width: 130px;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 12px;
+      border: 2px solid #e25580;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+
+    /* Модаль терезесі */
+    .win-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .win-modal.active {
+      display: flex;
+    }
+
+    .win-card {
+      background: white;
+      border-radius: 26px;
+      padding: 30px 20px;
+      text-align: center;
+      max-width: 350px;
+      width: 100%;
+      box-shadow: 0 15px 35px rgba(216, 74, 117, 0.3);
+      animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes pop {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .win-card h2 {
+      color: #d84a75;
+      font-size: 1.55rem;
+      margin-bottom: 10px;
+    }
+
+    .win-card p {
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .win-btn {
+      background: linear-gradient(135deg, #e25580, #ff758c);
+      color: white;
+      border: none;
+      padding: 12px 26px;
+      border-radius: 25px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Сиқырлы Пазл ✨</h1>
+  <p class="desc">Бөлшектерді кезекпен түртіп, орындарын ауыстыр</p>
+
+  <!-- 3 Фотоны таңдау түймелері -->
+  <div class="rounds">
+    <button class="round-btn active" onclick="switchPhoto(0)">1-фото 🌸</button>
+    <button class="round-btn" onclick="switchPhoto(1)">2-фото ✨</button>
+    <button class="round-btn" onclick="switchPhoto(2)">3-фото 💖</button>
+  </div>
+
+  <div class="stats">
+    <span>⏱️ Уақыт: <span id="timerText">0</span>с</span>
+    <span>🎯 Жүріс: <span id="movesText">0</span></span>
+  </div>
+
+  <div class="puzzle-board" id="board"></div>
+
+  <div class="controls">
+    <button class="btn" onclick="togglePreview()">Түпнұсқа 🖼️</button>
+    <button class="btn" onclick="restartGame()">Араластыру 🔄</button>
+  </div>
+
+  <div class="preview-box" id="previewBox">
+    <img id="previewImg" src="123-1.jpg" alt="Түпнұсқа">
+  </div>
+
+  <!-- Жеңіс экраны -->
+  <div class="win-modal" id="winModal">
+    <div class="win-card">
+      <div style="font-size: 46px; margin-bottom: 10px;">💖✨</div>
+      <h2>Мінсіз жинадың!</h2>
+      <p id="winStatsText"></p>
+      <p id="winMessageText">«Сен суретте қалай әдемі болсаң, өмірде де дәл солай сүйкімдісің... 🥰»</p>
+      <button class="win-btn" id="nextBtn" onclick="nextLevel()">Келесі фото ➡️</button>
+    </div>
+  </div>
+
+  <script>
+    // 3 фотоның тізімі:
+    const photos = ['123-1.jpg', '123-2.jpg', '123-3.jpg'];
+    let currentPhotoIndex = 0;
+
+    const gridSize = 4; // 16 бөлшек (4x4)
+    const boardSize = 312;
+    let tiles = [];
+    let selectedIndex = null;
+    let moves = 0;
+    let timer = 0;
+    let timerInterval = null;
+
+    const board = document.getElementById('board');
+    const previewBox = document.getElementById('previewBox');
+    const previewImg = document.getElementById('previewImg');
+    const winModal = document.getElementById('winModal');
+    const movesText = document.getElementById('movesText');
+    const timerText = document.getElementById('timerText');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function switchPhoto(index) {
+      currentPhotoIndex = index;
+      document.querySelectorAll('.round-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === index);
+      });
+      previewImg.src = photos[currentPhotoIndex];
+      restartGame();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timer = 0;
+      timerText.innerText = timer;
+      timerInterval = setInterval(() => {
+        timer++;
+        timerText.innerText = timer;
+      }, 1000);
+    }
+
+    function restartGame() {
+      clearInterval(timerInterval);
+      moves = 0;
+      movesText.innerText = moves;
+      selectedIndex = null;
+      
+      const totalTiles = gridSize * gridSize;
+      tiles = Array.from({length: totalTiles}, (_, i) => i);
+      
+      do {
+        tiles.sort(() => Math.random() - 0.5);
+      } while (checkWinState());
+
+      renderBoard();
+      startTimer();
+    }
+
+    function renderBoard() {
+      board.innerHTML = '';
+      board.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+      board.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+
+      const tileSize = boardSize / gridSize;
+
+      tiles.forEach((tileIndex, currentPos) => {
+        const div = document.createElement('div');
+        div.className = 'tile';
+        if (selectedIndex === currentPos) div.classList.add('selected');
+
+        div.style.backgroundImage = `url('${photos[currentPhotoIndex]}')`;
+        div.style.backgroundSize = `${boardSize}px ${boardSize}px`;
+
+        const row = Math.floor(tileIndex / gridSize);
+        const col = tileIndex % gridSize;
+        div.style.backgroundPosition = `-${col * tileSize}px -${row * tileSize}px`;
+
+        div.onclick = () => onTileClick(currentPos);
+        board.appendChild(div);
+      });
+    }
+
+    function onTileClick(pos) {
+      if (selectedIndex === null) {
+        selectedIndex = pos;
+        renderBoard();
+      } else {
+        const temp = tiles[selectedIndex];
+        tiles[selectedIndex] = tiles[pos];
+        tiles[pos] = temp;
+        
+        selectedIndex = null;
+        moves++;
+        movesText.innerText = moves;
+        renderBoard();
+
+        if (checkWinState()) {
+          clearInterval(timerInterval);
+          setTimeout(showWinModal, 250);
+        }
+      }
+    }
+
+    function checkWinState() {
+      return tiles.every((val, index) => val === index);
+    }
+
+    function showWinModal() {
+      document.getElementById('winStatsText').innerHTML = 
+        `Бар болғаны <b>${timer} секунд</b> және <b>${moves} жүріспен</b> жинадың! ✨`;
+      
+      if (currentPhotoIndex < photos.length - 1) {
+        nextBtn.innerText = 'Келесі фото ➡️';
+      } else {
+        nextBtn.innerText = 'Қайта ойнау 🔄';
+      }
+      winModal.classList.add('active');
+    }
+
+    function nextLevel() {
+      winModal.classList.remove('active');
+      if (currentPhotoIndex < photos.length - 1) {
+        switchPhoto(currentPhotoIndex + 1);
+      } else {
+        switchPhoto(0);
+      }
+    }
+
+    function togglePreview() {
+      previewBox.classList.toggle('active');
+    }
+
+    // Алғашқы іске қосу
+    switchPhoto(0);
+  </script>
+</body>
+</html>
